@@ -5,7 +5,7 @@ export const songs = [
     artist: "Nova",
     genre: "Chill",
     image: "https://picsum.photos/500/500?random=11",
-    audio: "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3",
     duration: "3:42",
   },
   {
@@ -14,7 +14,7 @@ export const songs = [
     artist: "Luna",
     genre: "Pop",
     image: "https://picsum.photos/500/500?random=12",
-    audio: "https://cdn.pixabay.com/audio/2022/03/10/audio_4f9bc0c03e.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg",
     duration: "4:05",
   },
   {
@@ -23,7 +23,7 @@ export const songs = [
     artist: "Aeris",
     genre: "Focus",
     image: "https://picsum.photos/500/500?random=13",
-    audio: "https://cdn.pixabay.com/audio/2022/08/02/audio_884fe05c21.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/riceracer_assets/music/start.ogg",
     duration: "3:28",
   },
   {
@@ -32,7 +32,7 @@ export const songs = [
     artist: "Kai",
     genre: "Chill",
     image: "https://picsum.photos/500/500?random=14",
-    audio: "https://cdn.pixabay.com/audio/2022/10/25/audio_c8e7239c0f.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/pyman_assets/ateapill.ogg",
     duration: "3:51",
   },
   {
@@ -41,7 +41,7 @@ export const songs = [
     artist: "Mira",
     genre: "Pop",
     image: "https://picsum.photos/500/500?random=15",
-    audio: "https://cdn.pixabay.com/audio/2023/02/28/audio_c23c3f7e82.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-assets/Evilution.ogg",
     duration: "4:12",
   },
   {
@@ -50,7 +50,7 @@ export const songs = [
     artist: "Zayn",
     genre: "Hip Hop",
     image: "https://picsum.photos/500/500?random=16",
-    audio: "https://cdn.pixabay.com/audio/2022/11/22/audio_d0450e78af.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3",
     duration: "3:35",
   },
   {
@@ -59,7 +59,7 @@ export const songs = [
     artist: "Aria",
     genre: "Pop",
     image: "https://picsum.photos/500/500?random=17",
-    audio: "https://cdn.pixabay.com/audio/2023/04/14/audio_a317e05ea1.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3",
     duration: "4:20",
   },
   {
@@ -68,7 +68,7 @@ export const songs = [
     artist: "Echo",
     genre: "Focus",
     image: "https://picsum.photos/500/500?random=18",
-    audio: "https://cdn.pixabay.com/audio/2022/06/07/audio_c6c9b3f8d0.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg",
     duration: "3:47",
   },
   {
@@ -77,7 +77,7 @@ export const songs = [
     artist: "Nova",
     genre: "Chill",
     image: "https://picsum.photos/500/500?random=19",
-    audio: "https://cdn.pixabay.com/audio/2022/09/15/audio_3d52b5aa60.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/riceracer_assets/music/start.ogg",
     duration: "4:01",
   },
   {
@@ -86,7 +86,7 @@ export const songs = [
     artist: "Luna",
     genre: "Pop",
     image: "https://picsum.photos/500/500?random=20",
-    audio: "https://cdn.pixabay.com/audio/2023/01/11/audio_6e8ff3e5cd.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/pyman_assets/ateapill.ogg",
     duration: "3:33",
   },
   {
@@ -95,7 +95,7 @@ export const songs = [
     artist: "Kai",
     genre: "Rock",
     image: "https://picsum.photos/500/500?random=21",
-    audio: "https://cdn.pixabay.com/audio/2022/07/19/audio_8e9f7e9842.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-assets/Evilution.ogg",
     duration: "4:15",
   },
   {
@@ -104,7 +104,7 @@ export const songs = [
     artist: "Zayn",
     genre: "Hip Hop",
     image: "https://picsum.photos/500/500?random=22",
-    audio: "https://cdn.pixabay.com/audio/2023/03/08/audio_29b5adb8ff.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Sevish_-__nbsp_.mp3",
     duration: "3:29",
   },
   {
@@ -113,7 +113,7 @@ export const songs = [
     artist: "Aria",
     genre: "Jazz",
     image: "https://picsum.photos/500/500?random=23",
-    audio: "https://cdn.pixabay.com/audio/2022/12/05/audio_c4f0b67e84.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/DDR_assets/Kangaroo_MusiQue_-_The_Neverwritten_Role_Playing_Game.mp3",
     duration: "4:42",
   },
   {
@@ -122,7 +122,7 @@ export const songs = [
     artist: "Echo",
     genre: "Focus",
     image: "https://picsum.photos/500/500?random=24",
-    audio: "https://cdn.pixabay.com/audio/2023/05/20/audio_b9e6f8c7e3.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-assets/Epoq-Lepidoptera.ogg",
     duration: "5:01",
   },
   {
@@ -131,7 +131,7 @@ export const songs = [
     artist: "Mira",
     genre: "Pop",
     image: "https://picsum.photos/500/500?random=25",
-    audio: "https://cdn.pixabay.com/audio/2022/04/18/audio_7f5d8e9a12.mp3",
+    audio: "https://commondatastorage.googleapis.com/codeskulptor-demos/riceracer_assets/music/start.ogg",
     duration: "3:54",
   },
 ];

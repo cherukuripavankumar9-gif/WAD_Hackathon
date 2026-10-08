@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = '/api';
 
 // ============ USER API ============
 
@@ -32,7 +32,10 @@ export const createPlaylist = async (userId, playlistData) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(playlistData),
   });
-  if (!response.ok) throw new Error('Failed to create playlist');
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create playlist');
+  }
   return response.json();
 };
 

@@ -19,7 +19,7 @@ function ProfilePage() {
 
   const loadUserProfile = async () => {
     try {
-      const userData = await getUser('user-1'); // Default user
+      const userData = await getUser('user-001'); // Default user
       setUser(userData);
       setFormData({
         username: userData.username,
@@ -28,6 +28,17 @@ function ProfilePage() {
       });
     } catch (error) {
       console.error('Failed to load profile:', error);
+      // Fallback to localStorage if API fails
+      const localUser = localStorage.getItem('tuneflow-user');
+      if (localUser) {
+        const userData = JSON.parse(localUser);
+        setUser(userData);
+        setFormData({
+          username: userData.username,
+          email: userData.email,
+          avatar: userData.avatar,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -36,13 +47,30 @@ function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updatedUser = await updateUser('user-1', formData);
+      const updatedUser = await updateUser('user-001', formData);
       setUser(updatedUser);
+      
+      // Save to localStorage as backup and for immediate UI update
+      localStorage.setItem('tuneflow-user', JSON.stringify(updatedUser));
+      
+      // Dispatch event to update header
+      window.dispatchEvent(new CustomEvent('userUpdated', { detail: updatedUser }));
+      
       setIsEditing(false);
       alert('Profile updated successfully!');
     } catch (error) {
       console.error('Failed to update profile:', error);
-      alert('Failed to update profile. Please try again.');
+      
+      // Save to localStorage anyway
+      const updatedUser = { ...user, ...formData };
+      localStorage.setItem('tuneflow-user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      // Dispatch event
+      window.dispatchEvent(new CustomEvent('userUpdated', { detail: updatedUser }));
+      
+      setIsEditing(false);
+      alert('Profile updated (saved locally)');
     } finally {
       setSaving(false);
     }

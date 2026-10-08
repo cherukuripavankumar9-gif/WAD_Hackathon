@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
+import path from 'path';
 
 const app = express();
 const PORT = 3001;
@@ -9,11 +11,14 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-// In-memory database (replace with real database in production)
-const database = {
+// Database file path
+const DB_FILE = './database.json';
+
+// Initialize database
+let database = {
   users: [
     {
-      id: 'user-1',
+      id: 'user-001',
       username: 'Listener',
       email: 'listener@tuneflow.com',
       avatar: 'K',
@@ -24,6 +29,35 @@ const database = {
   playlists: [],
   userPlaylists: {}, // userId -> [playlistIds]
 };
+
+// Load database from file
+function loadDatabase() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const data = fs.readFileSync(DB_FILE, 'utf8');
+      database = JSON.parse(data);
+      console.log('✅ Database loaded from file');
+    } else {
+      saveDatabase();
+      console.log('✅ New database created');
+    }
+  } catch (error) {
+    console.error('❌ Error loading database:', error);
+  }
+}
+
+// Save database to file
+function saveDatabase() {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(database, null, 2), 'utf8');
+    console.log('💾 Database saved');
+  } catch (error) {
+    console.error('❌ Error saving database:', error);
+  }
+}
+
+// Load database on startup
+loadDatabase();
 
 // ============ USER ENDPOINTS ============
 
@@ -57,6 +91,9 @@ app.put('/api/users/:userId', (req, res) => {
     avatar: avatar || database.users[userIndex].avatar,
   };
   
+  // Save to file
+  saveDatabase();
+  
   res.json(database.users[userIndex]);
 });
 
@@ -68,20 +105,20 @@ app.get('/api/users/:userId/playlists', (req, res) => {
   const playlistIds = database.userPlaylists[userId] || [];
   const playlists = database.playlists.filter(p => playlistIds.includes(p.id));
   
-  res.json(playlists);
+  res.json({ playlists });
 });
 
 // Create new playlist
 app.post('/api/users/:userId/playlists', (req, res) => {
   const { userId } = req.params;
-  const { name, description } = req.body;
+  const { name, description, id } = req.body;
   
   if (!name) {
     return res.status(400).json({ error: 'Playlist name is required' });
   }
   
   const newPlaylist = {
-    id: uuidv4(),
+    id: id || uuidv4(),
     name,
     description: description || '',
     songs: [],
@@ -96,6 +133,9 @@ app.post('/api/users/:userId/playlists', (req, res) => {
     database.userPlaylists[userId] = [];
   }
   database.userPlaylists[userId].push(newPlaylist.id);
+  
+  // Save to file
+  saveDatabase();
   
   res.status(201).json(newPlaylist);
 });
@@ -130,6 +170,9 @@ app.put('/api/playlists/:playlistId', (req, res) => {
     updatedAt: new Date().toISOString(),
   };
   
+  // Save to file
+  saveDatabase();
+  
   res.json(database.playlists[playlistIndex]);
 });
 
@@ -150,6 +193,9 @@ app.delete('/api/playlists/:playlistId', (req, res) => {
   Object.keys(database.userPlaylists).forEach(userId => {
     database.userPlaylists[userId] = database.userPlaylists[userId].filter(id => id !== playlistId);
   });
+  
+  // Save to file
+  saveDatabase();
   
   res.json({ message: 'Playlist deleted', playlist });
 });
@@ -172,6 +218,9 @@ app.post('/api/playlists/:playlistId/songs', (req, res) => {
   playlist.songs.push(songId);
   playlist.updatedAt = new Date().toISOString();
   
+  // Save to file
+  saveDatabase();
+  
   res.json(playlist);
 });
 
@@ -187,6 +236,9 @@ app.delete('/api/playlists/:playlistId/songs/:songId', (req, res) => {
   
   playlist.songs = playlist.songs.filter(id => id !== parseInt(songId));
   playlist.updatedAt = new Date().toISOString();
+  
+  // Save to file
+  saveDatabase();
   
   res.json(playlist);
 });

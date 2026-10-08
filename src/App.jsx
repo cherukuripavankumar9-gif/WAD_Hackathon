@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home as HomeIcon,
   Search as SearchIcon,
@@ -28,9 +28,13 @@ import Library from "./pages/Library";
 import AlbumPage from "./pages/AlbumPage";
 import LikedSongs from "./pages/LikedSongs";
 import ProfilePage from "./pages/ProfilePage";
+import PlaylistPage from "./pages/PlaylistPage";
 
 // Data
 import { songs } from "./data/allSongs";
+
+// API
+import { createPlaylist } from "./services/api";
 
 function App() {
   return (
@@ -42,6 +46,7 @@ function App() {
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const audioRef = useRef(null);
 
   const [currentSong, setCurrentSong] = useState(songs[0]);
@@ -61,6 +66,31 @@ function AppContent() {
 
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
+
+  // Playlist creation modal state
+  const [showCreatePlaylistModal, setShowCreatePlaylistModal] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [newPlaylistDesc, setNewPlaylistDesc] = useState("");
+
+  // User profile state
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("tuneflow-user");
+    return savedUser ? JSON.parse(savedUser) : {
+      username: "Listener",
+      avatar: "K",
+      email: "listener@tuneflow.com"
+    };
+  });
+
+  // Listen for user updates
+  useEffect(() => {
+    const handleUserUpdate = (event) => {
+      setUser(event.detail);
+    };
+
+    window.addEventListener('userUpdated', handleUserUpdate);
+    return () => window.removeEventListener('userUpdated', handleUserUpdate);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(
@@ -107,23 +137,36 @@ function AppContent() {
   useEffect(() => {
     if (!audioRef.current) return;
 
-    const playAudio = async () => {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.load(); // Force reload the audio
+    const audio = audioRef.current;
 
+    const handleCanPlay = () => {
+      console.log("✅ Audio can play");
+      // Auto-play when audio is ready and isPlaying is true
       if (isPlaying) {
-        try {
-          await audioRef.current.play();
-        } catch (error) {
-          console.error("Audio play failed:", error);
+        audio.play().catch(err => {
+          console.error("Auto-play blocked:", err);
           setIsPlaying(false);
-        }
+        });
       }
     };
 
-    playAudio();
-  }, [currentSong, isPlaying]);
+    audio.addEventListener('canplay', handleCanPlay);
+
+    return () => {
+      audio.removeEventListener('canplay', handleCanPlay);
+    };
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const audio = audioRef.current;
+    
+    // Load the new song
+    console.log("📂 Loading new song:", currentSong.title);
+    audio.load();
+    
+  }, [currentSong]);
 
   const playSong = (song) => {
     console.log("🎵 Playing:", song.title, "Audio URL:", song.audio);
@@ -137,16 +180,6 @@ function AppContent() {
 
       return [song, ...withoutCurrent].slice(0, 5);
     });
-
-    // Ensure audio actually plays after a small delay
-    setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.play().catch(err => {
-          console.error("Playback error:", err);
-          alert("Audio playback failed. Please check your internet connection or try another song.");
-        });
-      }
-    }, 100);
   };
 
   const togglePlay = () => {
@@ -155,9 +188,17 @@ function AppContent() {
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      console.log("⏸️ Paused");
     } else {
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
+      audioRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+          console.log("▶️ Playing");
+        })
+        .catch((err) => {
+          console.error("Play failed:", err);
+          setIsPlaying(false);
+        });
     }
   };
 
@@ -167,6 +208,40 @@ function AppContent() {
         ? prev.filter((songId) => songId !== id)
         : [...prev, id]
     );
+  };
+
+  const handleCreatePlaylist = async () => {
+    if (!newPlaylistName.trim()) return;
+
+    const userId = "user-001"; // Default user ID
+    const newPlaylist = {
+      id: `playlist-${Date.now()}`,
+      name: newPlaylistName,
+      description: newPlaylistDesc || "Custom playlist",
+      songs: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      // Try to save to backend
+      await createPlaylist(userId, newPlaylist);
+      console.log("✅ Playlist created:", newPlaylist.name);
+    } catch (error) {
+      console.log("💾 Saving to localStorage only");
+    }
+
+    // Always save to localStorage as backup
+    const playlists = JSON.parse(localStorage.getItem("tuneflow-playlists") || "[]");
+    playlists.push(newPlaylist);
+    localStorage.setItem("tuneflow-playlists", JSON.stringify(playlists));
+
+    // Reset form
+    setNewPlaylistName("");
+    setNewPlaylistDesc("");
+    setShowCreatePlaylistModal(false);
+
+    // Navigate to library to see the new playlist
+    navigate("/library");
   };
 
   const toggleMute = () => {
@@ -266,7 +341,7 @@ function AppContent() {
         src={currentSong.audio}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
-        preload="auto"
+        preload="metadata"
         crossOrigin="anonymous"
       />
 
@@ -310,7 +385,7 @@ function AppContent() {
         <div className="menu-title playlist-title">YOUR MUSIC</div>
 
         <nav>
-          <button className="nav-item" onClick={() => alert("Create Playlist feature coming soon!")}>
+          <button className="nav-item" onClick={() => setShowCreatePlaylistModal(true)}>
             <Plus size={20} />
             <span>Create Playlist</span>
           </button>
@@ -323,9 +398,9 @@ function AppContent() {
 
         <div className="sidebar-bottom">
           <div className="mini-profile">
-            <div className="profile-circle">K</div>
+            <div className="profile-circle">{user.avatar}</div>
             <div>
-              <strong>Listener</strong>
+              <strong>{user.username}</strong>
               <small>Free Account</small>
             </div>
           </div>
@@ -353,8 +428,8 @@ function AppContent() {
             </button>
 
             <Link to="/profile" className="profile">
-              <div className="profile-circle">K</div>
-              <span>Listener</span>
+              <div className="profile-circle">{user.avatar}</div>
+              <span>{user.username}</span>
             </Link>
           </div>
         </header>
@@ -427,6 +502,18 @@ function AppContent() {
           <Route
             path="/profile"
             element={<ProfilePage />}
+          />
+          <Route
+            path="/playlist/:playlistId"
+            element={
+              <PlaylistPage
+                playSong={playSong}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                likedSongs={likedSongs}
+                toggleLike={toggleLike}
+              />
+            }
           />
         </Routes>
       </main>
@@ -589,6 +676,53 @@ function AppContent() {
         </div>
 
       </footer>
+
+      {/* CREATE PLAYLIST MODAL */}
+      {showCreatePlaylistModal && (
+        <div className="modal-overlay" onClick={() => setShowCreatePlaylistModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2>Create New Playlist</h2>
+            <input
+              type="text"
+              placeholder="Playlist name"
+              value={newPlaylistName}
+              onChange={(e) => setNewPlaylistName(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && newPlaylistName.trim()) {
+                  handleCreatePlaylist();
+                }
+              }}
+              autoFocus
+            />
+            <textarea
+              placeholder="Description (optional)"
+              value={newPlaylistDesc}
+              onChange={(e) => setNewPlaylistDesc(e.target.value)}
+              rows="3"
+            />
+            <div className="modal-buttons">
+              <button 
+                className="secondary-button" 
+                onClick={() => {
+                  setShowCreatePlaylistModal(false);
+                  setNewPlaylistName("");
+                  setNewPlaylistDesc("");
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="primary-button"
+                onClick={handleCreatePlaylist}
+                disabled={!newPlaylistName.trim()}
+              >
+                <Plus size={18} />
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
