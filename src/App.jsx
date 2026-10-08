@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import {
-  Home,
-  Search,
-  Library,
+  Home as HomeIcon,
+  Search as SearchIcon,
+  Library as LibraryIcon,
   Heart,
   Plus,
   Bell,
@@ -14,92 +15,37 @@ import {
   Shuffle,
   Repeat,
   Volume2,
+  VolumeX,
   Music2,
   MoreHorizontal,
 } from "lucide-react";
 import "./App.css";
 
-const songs = [
-  {
-    id: 1,
-    title: "Midnight Drive",
-    artist: "Nova",
-    genre: "Chill",
-    image: "https://picsum.photos/500/500?random=11",
-    audio: "/songs/song1.mp3",
-    duration: "3:42",
-  },
-  {
-    id: 2,
-    title: "Golden Hour",
-    artist: "Luna",
-    genre: "Pop",
-    image: "https://picsum.photos/500/500?random=12",
-    audio: "/songs/song2.mp3",
-    duration: "4:05",
-  },
-  {
-    id: 3,
-    title: "Lost in Dreams",
-    artist: "Aeris",
-    genre: "Focus",
-    image: "https://picsum.photos/500/500?random=13",
-    audio: "/songs/song3.mp3",
-    duration: "3:28",
-  },
-  {
-    id: 4,
-    title: "Ocean Eyes",
-    artist: "Kai",
-    genre: "Chill",
-    image: "https://picsum.photos/500/500?random=14",
-    audio: "/songs/song1.mp3",
-    duration: "3:51",
-  },
-  {
-    id: 5,
-    title: "Afterglow",
-    artist: "Mira",
-    genre: "Pop",
-    image: "https://picsum.photos/500/500?random=15",
-    audio: "/songs/song2.mp3",
-    duration: "4:12",
-  },
-  {
-    id: 6,
-    title: "Electric Nights",
-    artist: "Zayn",
-    genre: "Hip Hop",
-    image: "https://picsum.photos/500/500?random=16",
-    audio: "/songs/song3.mp3",
-    duration: "3:35",
-  },
-  {
-    id: 7,
-    title: "Stay With Me",
-    artist: "Aria",
-    genre: "Pop",
-    image: "https://picsum.photos/500/500?random=17",
-    audio: "/songs/song1.mp3",
-    duration: "4:20",
-  },
-  {
-    id: 8,
-    title: "Nightfall",
-    artist: "Echo",
-    genre: "Focus",
-    image: "https://picsum.photos/500/500?random=18",
-    audio: "/songs/song2.mp3",
-    duration: "3:47",
-  },
-];
+// Pages
+import Home from "./pages/Home";
+import SearchPage from "./pages/SearchPage";
+import Library from "./pages/Library";
+import AlbumPage from "./pages/AlbumPage";
+import LikedSongs from "./pages/LikedSongs";
+import ProfilePage from "./pages/ProfilePage";
+
+// Data
+import { songs } from "./data/allSongs";
 
 function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
+
+function AppContent() {
+  const location = useLocation();
   const audioRef = useRef(null);
 
   const [currentSong, setCurrentSong] = useState(songs[0]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
 
   const [likedSongs, setLikedSongs] = useState(() => {
@@ -111,6 +57,7 @@ function App() {
 
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(70);
+  const [isMuted, setIsMuted] = useState(false);
 
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState(false);
@@ -125,23 +72,61 @@ function App() {
   useEffect(() => {
     if (!audioRef.current) return;
 
-    audioRef.current.volume = volume / 100;
-  }, [volume]);
+    const audio = audioRef.current;
+    
+    const handleCanPlay = () => console.log("✅ Audio can play");
+    const handleLoadStart = () => console.log("⏳ Loading audio...");
+    const handleLoadedData = () => console.log("📦 Audio data loaded");
+    const handleError = (e) => console.error("❌ Audio error:", e);
+    const handlePlay = () => console.log("▶️ Audio started playing");
+    const handlePause = () => console.log("⏸️ Audio paused");
+
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('loadstart', handleLoadStart);
+    audio.addEventListener('loadeddata', handleLoadedData);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+
+    return () => {
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('loadstart', handleLoadStart);
+      audio.removeEventListener('loadeddata', handleLoadedData);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+    };
+  }, []);
 
   useEffect(() => {
     if (!audioRef.current) return;
 
-    audioRef.current.pause();
-    audioRef.current.currentTime = 0;
+    audioRef.current.volume = isMuted ? 0 : volume / 100;
+  }, [volume, isMuted]);
 
-    if (isPlaying) {
-      audioRef.current.play().catch(() => {
-        setIsPlaying(false);
-      });
-    }
-  }, [currentSong]);
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    const playAudio = async () => {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.load(); // Force reload the audio
+
+      if (isPlaying) {
+        try {
+          await audioRef.current.play();
+        } catch (error) {
+          console.error("Audio play failed:", error);
+          setIsPlaying(false);
+        }
+      }
+    };
+
+    playAudio();
+  }, [currentSong, isPlaying]);
 
   const playSong = (song) => {
+    console.log("🎵 Playing:", song.title, "Audio URL:", song.audio);
     setCurrentSong(song);
     setIsPlaying(true);
 
@@ -152,6 +137,16 @@ function App() {
 
       return [song, ...withoutCurrent].slice(0, 5);
     });
+
+    // Ensure audio actually plays after a small delay
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.play().catch(err => {
+          console.error("Playback error:", err);
+          alert("Audio playback failed. Please check your internet connection or try another song.");
+        });
+      }
+    }, 100);
   };
 
   const togglePlay = () => {
@@ -172,6 +167,10 @@ function App() {
         ? prev.filter((songId) => songId !== id)
         : [...prev, id]
     );
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
   };
 
   const nextSong = () => {
@@ -256,459 +255,183 @@ function App() {
   };
 
   const filteredSongs = songs.filter((song) => {
-    const matchesSearch =
-      song.title
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      song.artist
-        .toLowerCase()
-        .includes(search.toLowerCase());
-
-    const matchesCategory =
-      activeCategory === "All" ||
-      song.genre === activeCategory;
-
-    return matchesSearch && matchesCategory;
+    const matchesCategory = activeCategory === "All" || song.genre === activeCategory;
+    return matchesCategory;
   });
-
-  const likedSongObjects = songs.filter((song) =>
-    likedSongs.includes(song.id)
-  );
 
   return (
     <div className="app">
-
       <audio
         ref={audioRef}
         src={currentSong.audio}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
+        preload="auto"
+        crossOrigin="anonymous"
       />
 
       {/* SIDEBAR */}
-
       <aside className="sidebar">
-
-        <div className="brand">
+        <Link to="/" className="brand">
           <div className="brand-icon">
             <Music2 size={23} />
           </div>
-
           <span>TuneFlow</span>
-        </div>
+        </Link>
 
-        <div className="menu-title">
-          MENU
-        </div>
+        <div className="menu-title">MENU</div>
 
         <nav>
-
-          <button className="nav-item active">
-            <Home size={20} />
+          <Link
+            to="/"
+            className={location.pathname === "/" ? "nav-item active" : "nav-item"}
+          >
+            <HomeIcon size={20} />
             <span>Home</span>
-          </button>
+          </Link>
 
-          <button className="nav-item">
-            <Search size={20} />
+          <Link
+            to="/search"
+            className={location.pathname === "/search" ? "nav-item active" : "nav-item"}
+          >
+            <SearchIcon size={20} />
             <span>Search</span>
-          </button>
+          </Link>
 
-          <button className="nav-item">
-            <Library size={20} />
+          <Link
+            to="/library"
+            className={location.pathname === "/library" ? "nav-item active" : "nav-item"}
+          >
+            <LibraryIcon size={20} />
             <span>Your Library</span>
-          </button>
-
+          </Link>
         </nav>
 
-        <div className="menu-title playlist-title">
-          YOUR MUSIC
-        </div>
+        <div className="menu-title playlist-title">YOUR MUSIC</div>
 
         <nav>
-
-          <button className="nav-item">
+          <button className="nav-item" onClick={() => alert("Create Playlist feature coming soon!")}>
             <Plus size={20} />
             <span>Create Playlist</span>
           </button>
 
-          <button
-            className="nav-item"
-            onClick={() =>
-              setActiveCategory("Liked")
-            }
-          >
+          <Link to="/liked" className={location.pathname === "/liked" ? "nav-item active" : "nav-item"}>
             <Heart size={20} />
             <span>Liked Songs</span>
-          </button>
-
+          </Link>
         </nav>
 
         <div className="sidebar-bottom">
           <div className="mini-profile">
-            <div className="profile-circle">
-              K
-            </div>
-
+            <div className="profile-circle">K</div>
             <div>
               <strong>Listener</strong>
               <small>Free Account</small>
             </div>
           </div>
         </div>
-
       </aside>
 
       {/* MAIN */}
-
       <main className="main">
-
         {/* HEADER */}
-
         <header className="header">
-
-          <div className="search-container">
-
-            <Search size={19} />
-
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search songs, artists..."
-            />
-
-            {search && (
-              <button
-                className="clear-search"
-                onClick={() => setSearch("")}
-              >
-                ×
-              </button>
-            )}
-
+          <div className="header-left">
+            <div className="page-title">
+              {location.pathname === "/" && "Home"}
+              {location.pathname === "/search" && "Search"}
+              {location.pathname === "/library" && "Your Library"}
+              {location.pathname === "/liked" && "Liked Songs"}
+              {location.pathname === "/profile" && "Profile"}
+              {location.pathname.startsWith("/album") && "Album"}
+            </div>
           </div>
 
           <div className="header-right">
-
-            <button className="icon-button">
+            <button className="icon-button" onClick={() => alert("Notifications coming soon!")}>
               <Bell size={20} />
             </button>
 
-            <div className="profile">
-              <div className="profile-circle">
-                K
-              </div>
-
+            <Link to="/profile" className="profile">
+              <div className="profile-circle">K</div>
               <span>Listener</span>
-            </div>
-
+            </Link>
           </div>
-
         </header>
 
-        {/* CONTENT */}
-
-        <div className="content">
-
-          {/* HERO */}
-
-          <section className="hero">
-
-            <div className="hero-content">
-
-              <span className="hero-label">
-                YOUR DAILY MUSIC
-              </span>
-
-              <h1>
-                Your Music.
-                <br />
-                Your Mood.
-                <br />
-                Your Moment.
-              </h1>
-
-              <p>
-                Discover new sounds, revisit your
-                favorites, and enjoy every moment.
-              </p>
-
-              <button
-                className="primary-button"
-                onClick={() =>
-                  playSong(songs[0])
-                }
-              >
-                <Play
-                  size={18}
-                  fill="currentColor"
-                />
-                Start Listening
-              </button>
-
-            </div>
-
-            <div className="hero-art">
-
-              <div className="vinyl">
-                <div className="vinyl-center">
-                  <Music2 size={30} />
-                </div>
-              </div>
-
-            </div>
-
-          </section>
-
-          {/* CATEGORIES */}
-
-          <div className="categories">
-
-            {[
-              "All",
-              "Pop",
-              "Hip Hop",
-              "Chill",
-              "Focus",
-            ].map((category) => (
-
-              <button
-                key={category}
-                className={
-                  activeCategory === category
-                    ? "category active"
-                    : "category"
-                }
-                onClick={() =>
-                  setActiveCategory(category)
-                }
-              >
-                {category}
-              </button>
-
-            ))}
-
-          </div>
-
-          {/* SEARCH RESULTS */}
-
-          {search && (
-            <section className="section">
-
-              <div className="section-heading">
-                <div>
-                  <h2>Search Results</h2>
-                  <p>
-                    {filteredSongs.length} results found
-                  </p>
-                </div>
-              </div>
-
-              {filteredSongs.length > 0 ? (
-                <div className="song-grid">
-
-                  {filteredSongs.map((song) => (
-                    <SongCard
-                      key={song.id}
-                      song={song}
-                      currentSong={currentSong}
-                      isPlaying={isPlaying}
-                      likedSongs={likedSongs}
-                      playSong={playSong}
-                      toggleLike={toggleLike}
-                    />
-                  ))}
-
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <Search size={40} />
-                  <h3>No songs found</h3>
-                  <p>
-                    Try another song or artist.
-                  </p>
-                </div>
-              )}
-
-            </section>
-          )}
-
-          {/* TRENDING */}
-
-          {!search && (
-            <>
-
-              <section className="section">
-
-                <div className="section-heading">
-
-                  <div>
-                    <h2>Trending Now</h2>
-                    <p>
-                      Popular with listeners today
-                    </p>
-                  </div>
-
-                  <button className="show-all">
-                    Show all
-                  </button>
-
-                </div>
-
-                <div className="song-grid">
-
-                  {songs.slice(0, 5).map((song) => (
-                    <SongCard
-                      key={song.id}
-                      song={song}
-                      currentSong={currentSong}
-                      isPlaying={isPlaying}
-                      likedSongs={likedSongs}
-                      playSong={playSong}
-                      toggleLike={toggleLike}
-                    />
-                  ))}
-
-                </div>
-
-              </section>
-
-              {/* MADE FOR YOU */}
-
-              <section className="section">
-
-                <div className="section-heading">
-
-                  <div>
-                    <h2>Made For You</h2>
-                    <p>
-                      Handpicked for your taste
-                    </p>
-                  </div>
-
-                  <button className="show-all">
-                    Show all
-                  </button>
-
-                </div>
-
-                <div className="song-grid">
-
-                  {songs.slice(3, 8).map((song) => (
-                    <SongCard
-                      key={song.id}
-                      song={song}
-                      currentSong={currentSong}
-                      isPlaying={isPlaying}
-                      likedSongs={likedSongs}
-                      playSong={playSong}
-                      toggleLike={toggleLike}
-                    />
-                  ))}
-
-                </div>
-
-              </section>
-
-              {/* RECENT */}
-
-              {recentSongs.length > 0 && (
-                <section className="section">
-
-                  <div className="section-heading">
-
-                    <div>
-                      <h2>Recently Played</h2>
-                      <p>
-                        Continue listening
-                      </p>
-                    </div>
-
-                  </div>
-
-                  <div className="recent-list">
-
-                    {recentSongs.map((song) => (
-
-                      <button
-                        className="recent-item"
-                        key={song.id}
-                        onClick={() =>
-                          playSong(song)
-                        }
-                      >
-
-                        <img
-                          src={song.image}
-                          alt={song.title}
-                        />
-
-                        <div>
-                          <strong>
-                            {song.title}
-                          </strong>
-
-                          <span>
-                            {song.artist}
-                          </span>
-                        </div>
-
-                        <Play size={18} />
-
-                      </button>
-
-                    ))}
-
-                  </div>
-
-                </section>
-              )}
-
-              {/* LIKED */}
-
-              {likedSongObjects.length > 0 && (
-                <section className="section">
-
-                  <div className="section-heading">
-
-                    <div>
-                      <h2>Your Favorites</h2>
-                      <p>
-                        Songs you love
-                      </p>
-                    </div>
-
-                  </div>
-
-                  <div className="song-grid">
-
-                    {likedSongObjects.map((song) => (
-                      <SongCard
-                        key={song.id}
-                        song={song}
-                        currentSong={currentSong}
-                        isPlaying={isPlaying}
-                        likedSongs={likedSongs}
-                        playSong={playSong}
-                        toggleLike={toggleLike}
-                      />
-                    ))}
-
-                  </div>
-
-                </section>
-              )}
-
-            </>
-          )}
-
-        </div>
-
+        {/* ROUTES */}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Home
+                playSong={playSong}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                likedSongs={likedSongs}
+                toggleLike={toggleLike}
+              />
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <SearchPage
+                playSong={playSong}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                likedSongs={likedSongs}
+                toggleLike={toggleLike}
+              />
+            }
+          />
+          <Route
+            path="/library"
+            element={
+              <Library
+                playSong={playSong}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                likedSongs={likedSongs}
+                toggleLike={toggleLike}
+                recentSongs={recentSongs}
+              />
+            }
+          />
+          <Route
+            path="/album/:id"
+            element={
+              <AlbumPage
+                playSong={playSong}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                likedSongs={likedSongs}
+                toggleLike={toggleLike}
+                togglePlay={togglePlay}
+              />
+            }
+          />
+          <Route
+            path="/liked"
+            element={
+              <LikedSongs
+                playSong={playSong}
+                currentSong={currentSong}
+                isPlaying={isPlaying}
+                likedSongs={likedSongs}
+                toggleLike={toggleLike}
+                togglePlay={togglePlay}
+              />
+            }
+          />
+          <Route
+            path="/profile"
+            element={<ProfilePage />}
+          />
+        </Routes>
       </main>
 
       {/* PLAYER */}
-
       <footer className="player">
 
         <div className="now-playing">
@@ -837,19 +560,31 @@ function App() {
 
         <div className="volume-container">
 
-          <Volume2 size={19} />
+          <button 
+            className="volume-icon-btn"
+            onClick={toggleMute}
+            type="button"
+          >
+            {isMuted || volume === 0 ? (
+              <VolumeX size={19} />
+            ) : (
+              <Volume2 size={19} />
+            )}
+          </button>
 
           <input
             type="range"
             min="0"
             max="100"
-            value={volume}
-            onChange={(e) =>
-              setVolume(Number(e.target.value))
-            }
+            value={isMuted ? 0 : volume}
+            onChange={(e) => {
+              const newVolume = Number(e.target.value);
+              setVolume(newVolume);
+              if (newVolume > 0) setIsMuted(false);
+            }}
           />
 
-          <MoreHorizontal size={19} />
+          <span className="volume-percentage">{isMuted ? 0 : volume}%</span>
 
         </div>
 
